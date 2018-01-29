@@ -22,9 +22,7 @@ const list = [
 ];
 
 function isSearched(searchTerm) {
-  console.log('I am serachterm' + searchTerm);
   return function (item) {
-    console.log('I am item' + item);
     return item.title.toLowerCase().includes(searchTerm.toLowerCase());
   }
 }
@@ -33,6 +31,7 @@ function isSearched(searchTerm) {
  * const isSearched = searchTerm => item =>
   item.title.toLowerCase().includes(searchTerm.toLowerCase());
  */
+
 
 class App extends Component {
   constructor(props) {
@@ -55,6 +54,7 @@ class App extends Component {
     //update the list in internal component state!
     this.setState({ list: updatedList });
   }
+  
   onSearchChange(event) {
     //event is the synthetic react event in your callback function
     this.setState({ searchTerm: event.target.value });
@@ -65,43 +65,85 @@ class App extends Component {
   //Component[this.state] -> Render[view]
 
   render() {
+    const {
+      searchTerm,
+      list
+    } = this.state;
     return (
       <div className="App">
-        <header className="App-header">
-          {/* <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to the React</h1> */}
-        </header>
-        <div className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
-          <form>
-            <input type="text"
-            onChange={this.onSearchChange}
-            />
-          </form>
-          {this.state.list.filter(isSearched(this.state.searchTerm))
-            .map(item => {
-            return (
-              <div key={item.objectID}>
-                <span>
-                  <a href={item.url}>{item.title}</a>
-                </span>
-                <span>{item.author}</span>
-                <span>{item.num_comments}</span>
-                <span>{item.points}</span>
-                <span>
-                  <button
-                    onClick={() => this.onDismiss(item.objectID)}
-                    type="button"
-                  >
-                    Dismiss
-                  </button>
-                </span>
-              </div>
-            );
-          })}
-        </div>
+        <Search
+          value={searchTerm}
+          onChange={this.onSearchChange}
+        >
+          Search
+        </Search>
+        <Table
+          list={list}
+          pattern={searchTerm}
+          onDismiss={this.onDismiss}
+        />
       </div>
     );
+  }
+}
+
+class Search extends Component {
+  render() {
+    const { value, onChange, children } = this.props; 
+    return (
+      <form>
+        {children}
+        {/* You can pass an element and element trees (HOLEEE SHIT) as children */}
+        <input
+          type="text"
+          value={value}
+          onChange={onChange}
+        />
+      </form>
+    )
+  }
+}
+
+class Table extends Component {
+  render() {
+    const { list, pattern, onDismiss } = this.props;
+    return (
+      <div>
+        {list.filter(isSearched(pattern)).map(item =>
+          <div key={item.objectID}>
+            <span>
+              <a href={item.url}>{item.title}</a>
+            </span>
+            <span>{item.author}</span>
+            <span>{item.num_comments}</span>
+            <span>{item.points}</span>
+            <Button onClick={() => onDismiss(item.objectId)}>
+              Dismiss  
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  }
+}
+
+class Button extends Component {
+  render() {
+    const {
+      onClick,
+      className = 'default-button',
+      children,
+    } = this.props;
+
+    return (
+      <button
+        onClick={onClick}
+        className={className}
+        type="button"
+      >
+        {children}
+      </button>  
+    )
   }
 }
 
