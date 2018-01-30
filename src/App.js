@@ -197,6 +197,41 @@ const Button = ({
  * 
  */
 
-
+// Side Note 2
+/**
+ * React Lifecycle: 
+ * constructor called when component is created and inserted
+ * When component is instantiated is is "mounting the component"
+ * 
+ * Render is called on mounting AND component update
+ * 
+ * constructor -> componentWillMount() -> render() -> componentDidMount()
+ * 
+ * Update lifecycle of a component when state/props change
+ * componentWillRecieveProps() -> shouldComponentUpdate() -> componentWillUpdate() -> render() -> componentDidUpdate()
+ * 
+ * Unmounting
+ * componentWillUnmount()
+ * 
+ * Examples:
+ * 
+ * constructor -> set initial component state and bind class methods
+ * 
+ * componentWillMount->set internal component state
+ * 
+ * render-> returns elements as ouput (input as props and state)
+ * 
+ * componentDidMount->once when component mounted (good for asyncy calls  and store )
+ * 
+ * componentWillReceiveProps(nextProps)-> diff next props with previous props (this.props)
+ * 
+ * shouldComponentUpdate(nextProps, nextState)-> called when state or props change, perforamnce optimzations
+ * 
+ * componentWillUpdate(nextProps, nextState)-> immediately before render(), last opportunity to execute (no longer trigger setState()) 
+ * 
+ * componentDidUpdate(prevProps,prevState)-> invoked after render(), perform DOM operations or more async tasks
+ * 
+ * componentWillUnmount() -> called before component destruction 
+ */
 
 export default App;
