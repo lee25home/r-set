@@ -35,6 +35,7 @@ function isSearched(searchTerm) {
 
 class App extends Component {
   constructor(props) {
+    //runs once in a lifetime
     super(props);
 
     this.state = {
@@ -65,6 +66,7 @@ class App extends Component {
   //Component[this.state] -> Render[view]
 
   render() {
+    //runs once in the beginning, and every update.
     const {
       searchTerm,
       list
@@ -87,64 +89,114 @@ class App extends Component {
   }
 }
 
-class Search extends Component {
-  render() {
-    const { value, onChange, children } = this.props; 
-    return (
-      <form>
-        {children}
-        {/* You can pass an element and element trees (HOLEEE SHIT) as children */}
-        <input
-          type="text"
-          value={value}
-          onChange={onChange}
-        />
-      </form>
-    )
-  }
-}
+// class Search extends Component {
+//   render() {
+//     const { value, onChange, children } = this.props; 
+//     return (
+//       <form>
+//         {children}
+//         {/* You can pass an element and element trees (HOLEEE SHIT) as children */}
+//         <input
+//           type="text"
+//           value={value}
+//           onChange={onChange}
+//         />
+//       </form>
+//     )
+//   }
+// }
 
-class Table extends Component {
-  render() {
-    const { list, pattern, onDismiss } = this.props;
-    return (
-      <div>
-        {list.filter(isSearched(pattern)).map(item =>
-          <div key={item.objectID}>
-            <span>
-              <a href={item.url}>{item.title}</a>
-            </span>
-            <span>{item.author}</span>
-            <span>{item.num_comments}</span>
-            <span>{item.points}</span>
-            <Button onClick={() => onDismiss(item.objectId)}>
-              Dismiss  
-            </Button>
-          </div>
-        )}
+//Refactor Functional Stateless
+const Search = ({ value, onChange, children }) =>
+  <form>
+    {children} <input
+      type="text"
+      value={value}
+      onChange={onChange}
+    />
+  </form>
+
+const Table = ({ list, pattern, onDismiss }) =>
+  <div className="table">
+    {list.filter(isSearched(pattern)).map(item =>
+      <div key={item.objectID} className="table-row">
+        <span style={{ width: '40%' }}>
+          <a href={item.url}>{item.title}</a>
+        </span>
+        <span style={{ width: '30%' }}>
+          {item.author}
+        </span>
+        <span style={{ width: '10%' }}>
+          {item.num_comments}
+        </span>
+        <span style={{ width: '10%' }}>
+          {item.points}
+        </span>
+        <span style={{ width: '10%' }}>
+          <Button
+            onClick={() => onDismiss(item.objectID)}
+            className="button-inline"
+          >
+            Dismiss
+          </Button>
+        </span>
       </div>
-    );
-  }
-}
+    )}
+  </div>
 
-class Button extends Component {
-  render() {
-    const {
-      onClick,
-      className = 'default-button',
-      children,
-    } = this.props;
+// class Button extends Component {
+//   render() {
+//     const {
+//       onClick,
+//       className = 'default-button',
+//       children,
+//     } = this.props;
 
-    return (
-      <button
-        onClick={onClick}
-        className={className}
-        type="button"
-      >
-        {children}
-      </button>  
-    )
-  }
-}
+//     return (
+//       <button
+//         onClick={onClick}
+//         className={className}
+//         type="button"
+//       >
+//         {children}
+//       </button>  
+//     )
+//   }
+// }
+
+//Refactor
+
+const Button = ({
+  onClick,
+  className = '',
+  children,
+}) =>
+  <button
+    onClick={onClick}
+    className={className}
+    type="button"
+  >
+    {children}
+  </button>
+
+//Side Note:
+/**
+ * These are the ES6 class components available;
+ 
+ * Functional Stateless Components : input == props, output == jsx
+ * They are functions -> no local state
+ * Cannot access or update state (this.state, or this.setState())
+ * NO this object
+ * NO lifecycle methods /No lifecycle
+ 
+ * Class Components: extend the React component
+ * hooks all lifecycle methods, 
+ * you can store and manipulate ES6 components(this.state, this.setState()) 
+ * 
+ * React.createClass  - since deprecated
+ * 
+ */
+
+
 
 export default App;
