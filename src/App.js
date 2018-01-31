@@ -1,37 +1,13 @@
 import React, { Component } from "react";
-import logo from "./logo.svg";
 import "./App.css";
 
-const list = [
-  {
-    title: "React",
-    url: "https://facebook.github.io/react/",
-    author: "Jordan Walke",
-    num_comments: 3,
-    points: 4,
-    objectID: 0
-  },
-  {
-    title: "Redux",
-    url: "https://github.com/reactjs/redux",
-    author: "Dan Abramov, Andrew Clark",
-    num_comments: 2,
-    points: 5,
-    objectID: 1
-  }
-];
+const DEFAULT_QUERY = "js";
 
-function isSearched(searchTerm) {
-  return function (item) {
-    return item.title.toLowerCase().includes(searchTerm.toLowerCase());
-  }
-}
+const PATH_BASE = "https://hn.algolia.com/api/v1";
+const PATH_SEARCH = "/search";
+const PARAM_SEARCH = "query=";
 
-/**
- * const isSearched = searchTerm => item =>
-  item.title.toLowerCase().includes(searchTerm.toLowerCase());
- */
-
+const url = `${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${DEFAULT_QUERY}`;
 
 class App extends Component {
   constructor(props) {
@@ -39,100 +15,109 @@ class App extends Component {
     super(props);
 
     this.state = {
-      list: list,
-      searchTerm: '',
+      result: null,
+      searchTerm: DEFAULT_QUERY
     };
     //class binding are not automatic.
 
-    this.onDismiss = this.onDismiss.bind(this);
+    this.setSearchTopStories = this.setSearchTopStories.bind(this);
+    this.fetchSearchTopStories = this.fetchSearchTopStories.bind(this);
     this.onSearchChange = this.onSearchChange.bind(this);
+    this.onDismiss = this.onDismiss.bind(this);
+    this.onSearchSubmit = this.onSearchSubmit.bind(this);
     //to make 'this' accessible you have to bind the class method to 'this'
+  }
+
+  setSearchTopStories(result) {
+    this.setState({ result });
+  }
+
+  fetchSearchTopStories(searchTerm) {
+    fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}`)
+      .then(response => response.json())
+      .then(result => this.setSearchTopStories(result))
+      .catch(e => e);
   }
 
   onDismiss(id) {
     const isNotId = item => item.objectID !== id;
-    const updatedList = this.state.list.filter(isNotId);
-    //update the list in internal component state!
-    this.setState({ list: updatedList });
+    const updatedHits = this.state.result.hits.filter(isNotId);
+    this.setState({
+      //avoid mutated objects - immutable is best
+      result: { ...this.state.result, hits: updatedHits }
+    });
   }
-  
+
   onSearchChange(event) {
-    //event is the synthetic react event in your callback function
     this.setState({ searchTerm: event.target.value });
     //this.setState is a shallow merge.
-    //list state in this case if dismissed would stay the same!
   }
 
-  //Component[this.state] -> Render[view]
+  onSearchSubmit(event) {
+    const { searchTerm } = this.state;
+    this.fetchSearchTopStories(searchTerm);
+    event.preventDefault();
+  }
+
+  componentDidMount() {
+    const { searchTerm } = this.state;
+    this.fetchSearchTopStories(searchTerm);
+  }
 
   render() {
-    //runs once in the beginning, and every update.
-    const {
-      searchTerm,
-      list
-    } = this.state;
+    //Component[this.state] -> Render[view]
+    console.log(this.state);
+    const { searchTerm, result } = this.state;
+
+    if (!result) {
+      return null;
+    }
+
     return (
       <div className="App">
-        <Search
-          value={searchTerm}
-          onChange={this.onSearchChange}
-        >
-          Search
-        </Search>
-        <Table
-          list={list}
-          pattern={searchTerm}
-          onDismiss={this.onDismiss}
-        />
+        <div className="interactions">
+          <Search
+            value={searchTerm}
+            onChange={this.onSearchChange}
+            onSubmit={this.onSearchSubmit}
+          >
+            Search Article Titles
+          </Search>
+        </div>
+        {/* 
+        //Condiitional Rendering - present null if no hits on default query 
+            alternate -> result && ''
+        */}
+        {result ? (
+          <Table
+            list={result.hits}
+            onDismiss={this.onDismiss}
+          />
+        ) : null}
       </div>
     );
   }
 }
 
-// class Search extends Component {
-//   render() {
-//     const { value, onChange, children } = this.props; 
-//     return (
-//       <form>
-//         {children}
-//         {/* You can pass an element and element trees (HOLEEE SHIT) as children */}
-//         <input
-//           type="text"
-//           value={value}
-//           onChange={onChange}
-//         />
-//       </form>
-//     )
-//   }
-// }
-
-//Refactor Functional Stateless
-const Search = ({ value, onChange, children }) =>
-  <form>
-    {children} <input
-      type="text"
-      value={value}
-      onChange={onChange}
-    />
+const Search = ({ value, onChange, onSubmit, children }) => (
+  <form onSubmit={onSubmit}>
+    {children}
+    <input type="text" value={value} onChange={onChange} />
+    <button type="submit"> {children} </button>
   </form>
+);
 
-const Table = ({ list, pattern, onDismiss }) =>
+const Table = ({ list, onDismiss }) => (
   <div className="table">
-    {list.filter(isSearched(pattern)).map(item =>
+    {list.map(item => (
       <div key={item.objectID} className="table-row">
-        <span style={{ width: '40%' }}>
+        <span style={{ width: "40%" }}>
           <a href={item.url}>{item.title}</a>
         </span>
-        <span style={{ width: '30%' }}>
-          {item.author}
-        </span>
-        <span style={{ width: '10%' }}>
-          {item.num_comments}
-        </span>
-        <span style={{ width: '10%' }}>
-          {item.points}
-        </span>
-        <span style={{ width: '10%' }}>
+        <span style={{ width: "30%" }}>{item.author}</span>
+        <span style={{ width: "10%" }}>{item.num_comments}</span>
+        <span style={{ width: "10%" }}>{item.points}</span>
+        <span style={{ width: "10%" }}>
           <Button
             onClick={() => onDismiss(item.objectID)}
             className="button-inline"
@@ -141,43 +126,15 @@ const Table = ({ list, pattern, onDismiss }) =>
           </Button>
         </span>
       </div>
-    )}
+    ))}
   </div>
+);
 
-// class Button extends Component {
-//   render() {
-//     const {
-//       onClick,
-//       className = 'default-button',
-//       children,
-//     } = this.props;
-
-//     return (
-//       <button
-//         onClick={onClick}
-//         className={className}
-//         type="button"
-//       >
-//         {children}
-//       </button>  
-//     )
-//   }
-// }
-
-//Refactor
-
-const Button = ({
-  onClick,
-  className = '',
-  children,
-}) =>
-  <button
-    onClick={onClick}
-    className={className}
-    type="button"
-  >
+const Button = ({ onClick, className = "", children }) => (
+  <button onClick={onClick} className={className} type="button">
     {children}
   </button>
+);
 
 //Side Note:
 /**
@@ -199,39 +156,39 @@ const Button = ({
 
 // Side Note 2
 /**
- * React Lifecycle: 
+ * React Lifecycle:
  * constructor called when component is created and inserted
  * When component is instantiated is is "mounting the component"
- * 
+ *
  * Render is called on mounting AND component update
- * 
+ *
  * constructor -> componentWillMount() -> render() -> componentDidMount()
- * 
+ *
  * Update lifecycle of a component when state/props change
  * componentWillRecieveProps() -> shouldComponentUpdate() -> componentWillUpdate() -> render() -> componentDidUpdate()
- * 
+ *
  * Unmounting
  * componentWillUnmount()
- * 
+ *
  * Examples:
- * 
+ *
  * constructor -> set initial component state and bind class methods
- * 
+ *
  * componentWillMount->set internal component state
- * 
+ *
  * render-> returns elements as ouput (input as props and state)
- * 
+ *
  * componentDidMount->once when component mounted (good for asyncy calls  and store )
- * 
+ *
  * componentWillReceiveProps(nextProps)-> diff next props with previous props (this.props)
- * 
+ *
  * shouldComponentUpdate(nextProps, nextState)-> called when state or props change, perforamnce optimzations
- * 
- * componentWillUpdate(nextProps, nextState)-> immediately before render(), last opportunity to execute (no longer trigger setState()) 
- * 
+ *
+ * componentWillUpdate(nextProps, nextState)-> immediately before render(), last opportunity to execute (no longer trigger setState())
+ *
  * componentDidUpdate(prevProps,prevState)-> invoked after render(), perform DOM operations or more async tasks
- * 
- * componentWillUnmount() -> called before component destruction 
+ *
+ * componentWillUnmount() -> called before component destruction
  */
 
 export default App;
